@@ -1,28 +1,41 @@
-name: Build binary assets
+name: Fetch Baeksahoe media
+
 on:
   push:
+    branches: [main]
     paths:
-      - 'READY_TO_BUILD_ASSETS'
+      - ".github/workflows/build-assets.yml"
+  workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
-  build:
+  fetch-media:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decode assets
+
+      - name: Download entry image
+        shell: bash
         run: |
-          if [ ! -f READY_TO_BUILD_ASSETS ]; then exit 0; fi
-          mkdir -p assets
-          cat chunks/entry.*.b64 | base64 -d > entry.jpg
-          cat chunks/audio.*.b64 | base64 -d > assets/white-night-fragrance.mp3
-          rm -rf chunks READY_TO_BUILD_ASSETS
-      - name: Commit assets
+          URL="$(echo 'aHR0cHM6Ly9kMmpxcm02b3phOG5iNi5jbG91ZGZyb250Lm5ldC9kYXRhc2V0cy85YTE5ZjhkNS01YTNjLTQ3ZTEtOWJjZS0yMWU2OTA5YTNkOTcucG5nP19qd3Q9ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnJaWGxJWVhOb0lqb2laamhpT0RNM05XWTVZekk1WXpnMU9DSXNJbUoxWTJ0bGRDSTZJbkoxYm5kaGVTMWtZWFJoYzJWMGN5SXNJbk4wWVdkbElqb2ljSEp2WkNJc0ltVjRjQ0k2TVRjNU1ESTFOVGsyTjMwLm1ncVhUWV9QLWZQaDdDNjBDTGhtSU50aDNhakJnTEE3YVpjVVl6MVNSSGc=' | base64 -d)"
+          curl -L --fail --retry 3 "$URL" -o entry.png
+
+      - name: Download new background audio
+        shell: bash
+        run: |
+          URL="$(echo 'aHR0cHM6Ly9kMmpxcm02b3phOG5iNi5jbG91ZGZyb250Lm5ldC9kYXRhc2V0cy8yYmU1MGFlYy0yMDExLTQ2ZmEtYTc2Zi1kYWExNmI1Zjc0NTEubXA0P19qd3Q9ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnJaWGxJWVhOb0lqb2lORFJqTTJGaVlUVXpZakkzWW1WaU9TSXNJbUoxWTJ0bGRDSTZJbkoxYm5kaGVTMWtZWFJoYzJWMGN5SXNJbk4wWVdkbElqb2ljSEp2WkNJc0ltVjRjQ0k2TVRjNU1ESTJPVE0wT1gwLlFZOXJmb0pEWENUdlNEM0F6cU5wMDYzWTZfazNPVHpidE1sSXpZSTFFbUk=' | base64 -d)"
+          curl -L --fail --retry 3 "$URL" -o white-night-fragrance.mp4
+
+      - name: Commit media
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "Build Baeksahoe media assets"
+          git add entry.png white-night-fragrance.mp4
+          if git diff --cached --quiet; then
+            echo "No media changes"
+          else
+            git commit -m "Add Baeksahoe image and new background music"
             git push
           fi
