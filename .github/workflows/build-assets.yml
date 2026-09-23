@@ -1,0 +1,28 @@
+name: Build binary assets
+on:
+  push:
+    paths:
+      - 'READY_TO_BUILD_ASSETS'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode assets
+        run: |
+          if [ ! -f READY_TO_BUILD_ASSETS ]; then exit 0; fi
+          mkdir -p assets
+          cat chunks/entry.*.b64 | base64 -d > entry.jpg
+          cat chunks/audio.*.b64 | base64 -d > assets/white-night-fragrance.mp3
+          rm -rf chunks READY_TO_BUILD_ASSETS
+      - name: Commit assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Build Baeksahoe media assets"
+            git push
+          fi
